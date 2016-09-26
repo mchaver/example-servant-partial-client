@@ -27,6 +27,7 @@ executable example-servant-partial-client
                      , servant
                      , servant-client
                      , servant-server
+                     , stm
                      , text
                      , wai
                      , warp
@@ -52,6 +53,7 @@ test-suite test
                      , servant
                      , servant-client
                      , servant-server
+                     , stm
                      , text
                      , transformers
                      , wai

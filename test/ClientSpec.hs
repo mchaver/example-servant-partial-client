@@ -6,7 +6,7 @@ import           Api
 
 import           Client
 
-import           Control.Concurrent.MVar
+import           Control.Concurrent.STM.TVar
 import           Control.Exception (throwIO, ErrorCall(..))
 import           Control.Monad.Trans.Except
 
@@ -41,14 +41,20 @@ spec = do
         try port (userAddV1 user) `shouldReturn` True
         try port (userGetV1 "foo") `shouldReturn` (Just user)
 
-
+    describe "V3" $ do
+      it "/v3/user/delete: delete an existing user" $ \port -> do
+        let user = UserV3 "foo" "John Smith" 25 "Washington, D.C." "888-888-8888"
+        try port (userAddV3 user) `shouldReturn` (Just user)
+        try port (userGetV3 "foo") `shouldReturn` (Just user)
+        try port (userDeleteV3 "foo") `shouldReturn` True
+        try port (userGetV3 "foo") `shouldReturn` Nothing
 
 main :: IO ()
 main = hspec spec
 
 withApp :: (Int -> IO a) -> IO a
 withApp action = do
-  m <- newMVar (Map.fromList []) :: IO (MVar (Map.Map Text UserV3))
+  m <- newTVarIO (Map.fromList []) :: IO (TVar (Map.Map Text UserV3))
   testWithApplication (return $ app m) action
 
 try :: Int -> (Manager -> BaseUrl -> ClientM a) -> IO a

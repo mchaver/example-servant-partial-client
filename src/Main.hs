@@ -7,7 +7,7 @@
 module Main where
 
 import           Api
-import           Control.Concurrent.MVar
+import           Control.Concurrent.STM.TVar
 import           Control.Monad.IO.Class
 import qualified Data.Map.Strict as Map
 import           Data.Text
@@ -24,5 +24,5 @@ main = do
   -- assume we have a server in its third version that supports old API queries
   -- there have been changes to our database but we store everything as UserV3
   -- and for old versions of the API we can convert to and from User to UserV3
-  m <- newMVar (Map.fromList []) :: IO (MVar (Map.Map Text UserV3))
+  m <- newTVarIO (Map.fromList []) :: IO (TVar (Map.Map Text UserV3))
   Warp.run 3000 $ app m
