@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Models where
 
@@ -27,3 +28,11 @@ data UserV3 = UserV3 {
 
 instance ToJSON UserV3
 instance FromJSON UserV3
+
+-- | Convert User to UserV3
+userToUserV3 :: User -> UserV3
+userToUserV3 u = UserV3 (userIdent u) (name u) (age u) "" ""
+
+-- | Convert UserV3 to User
+userV3ToUser :: UserV3 -> User
+userV3ToUser u = User (uv3UserIdent u) (uv3Name u) (uv3Age u)

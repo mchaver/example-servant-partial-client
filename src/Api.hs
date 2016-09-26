@@ -10,31 +10,29 @@ import Data.Text
 import Models
 import Servant.API
 
-
-
--- | The 'ServerApi' implements all of the versions. Some routes may be the 
+-- | The 'ServerApi' implements all of the versions. Some routes may be the
 -- the same and some may change.
-type ServerApi = ClientV1
-            :<|> ClientV2
-            :<|> ClientV3
+type ServerApi = ClientApiV1
+            :<|> ClientApiV2
+            :<|> ClientApiV3
 
 -- | Add and get a 'User'.
-type ClientV1 = "v1" :>
+type ClientApiV1 = "v1" :>
            (    "user" :> "add" :> ReqBody '[JSON] User :> Post '[JSON] Bool -- add a User, returns a Bool to show if the data entry was succseful or not
            :<|> UserGetRoute
            )
 
 -- | Add and get a 'User', but the add route returns 'Maybe User' instead of 'Bool'.
-type ClientV2 = "v2" :>
+type ClientApiV2 = "v2" :>
           (    "user" :> "add" :> ReqBody '[JSON] User :> Post '[JSON] (Maybe User) -- add a User, returns a Maybe User to show if the data entry was succseful or not
           :<|> UserGetRoute
           )
 
--- | This route is shared by ClientV1 and ClientV2
+-- | This route is shared by ClientApiV1 and ClientApiV2.
 type UserGetRoute = "user" :> "get" :> Capture "ident" Text  :> Get '[JSON] (Maybe User) -- get a User by name
 
 -- | Add and get a 'UserV3'.
-type ClientV3 = "v3" :> 
+type ClientApiV3 = "v3" :>
           (    "user" :> "add"    :> ReqBody '[JSON] UserV3 :> Post '[JSON] (Maybe UserV3) -- add a UserV3, returns a Maybe User to show if the data entry was succseful or not
           :<|> "user" :> "update" :> ReqBody '[JSON] UserV3  :> Post '[JSON] (Maybe UserV3) -- get a User by name
           :<|> "user" :> "delete" :> Capture "ident" Text  :> Post '[JSON] Bool -- delete a User by its ident
@@ -44,3 +42,12 @@ type ClientV3 = "v3" :>
 
 api :: Proxy ServerApi
 api = Proxy
+
+clientApiV1 :: Proxy ClientApiV1
+clientApiV1 = Proxy
+
+clientApiV2 :: Proxy ClientApiV2
+clientApiV2 = Proxy
+
+clientApiV3 :: Proxy ClientApiV3
+clientApiV3 = Proxy
