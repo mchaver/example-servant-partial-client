@@ -13,7 +13,8 @@ import           Control.Monad.Trans.Except
 import qualified Data.Map.Strict as Map
 import           Data.Text
 
-import           Models
+import qualified Models.V1 as V1
+import qualified Models.V3 as V3
 
 import           Network.HTTP.Client
 import           Network.Wai.Handler.Warp
@@ -33,17 +34,17 @@ spec = do
         try port (userGetV1 "foo") `shouldReturn` Nothing
 
       it "/v1/user/add: adds a user" $ \port -> do
-        let user = User "foo" "John Smith" 25
+        let user = V1.User "foo" "John Smith" 25
         try port (userAddV1 user) `shouldReturn` True
 
       it "/v1/user/get: finds a user that has been added to the database" $ \port -> do
-        let user = User "foo" "John Smith" 25
+        let user = V1.User "foo" "John Smith" 25
         try port (userAddV1 user) `shouldReturn` True
         try port (userGetV1 "foo") `shouldReturn` (Just user)
 
     describe "V3" $ do
       it "/v3/user/delete: delete an existing user" $ \port -> do
-        let user = UserV3 "foo" "John Smith" 25 "Washington, D.C." "888-888-8888"
+        let user = V3.User "foo" "John Smith" 25 "Washington, D.C." "888-888-8888"
         try port (userAddV3 user) `shouldReturn` (Just user)
         try port (userGetV3 "foo") `shouldReturn` (Just user)
         try port (userDeleteV3 "foo") `shouldReturn` True
@@ -54,7 +55,7 @@ main = hspec spec
 
 withApp :: (Int -> IO a) -> IO a
 withApp action = do
-  m <- newTVarIO (Map.fromList []) :: IO (TVar (Map.Map Text UserV3))
+  m <- newTVarIO (Map.fromList []) :: IO (TVar (Map.Map Text V3.User))
   testWithApplication (return $ app m) action
 
 try :: Int -> (Manager -> BaseUrl -> ClientM a) -> IO a

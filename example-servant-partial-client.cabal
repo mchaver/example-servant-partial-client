@@ -17,7 +17,8 @@ executable example-servant-partial-client
   main-is:             Main.hs
   other-modules:       Api
                        Client
-                       Models
+                       Models.V1
+                       Models.V3
                        Server
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
@@ -42,7 +43,8 @@ test-suite test
   main-is:             Spec.hs
   other-modules:       Api
                        Client
-                       Models
+                       Models.V1
+                       Models.V3
                        Server
   build-depends:       base
                      , aeson

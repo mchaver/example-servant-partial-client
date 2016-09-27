@@ -12,12 +12,13 @@ import           Control.Monad.IO.Class
 import           Control.Monad.STM
 import qualified Data.Map.Strict as Map
 import           Data.Text
-import           Models
+import qualified Models.V1 as V1
+import qualified Models.V3 as V3
 import           Network.Wai
 import           Servant
 
 
-server :: TVar (Map.Map Text UserV3) -> Server ServerApi
+server :: TVar (Map.Map Text V3.User) -> Server ServerApi
 server tVarUserDb =
   (v1UserAddH :<|> v1UserGetH)
   :<|> (v2UserAddH :<|> v2UserGetH)
@@ -37,46 +38,46 @@ server tVarUserDb =
     v3UserGetH name            = liftIO $ v3UserGet name
 
     -- V1
-    v1UserAdd :: User -> IO Bool
+    v1UserAdd :: V1.User -> IO Bool
     v1UserAdd newUser = do
       userDb <- readTVarIO tVarUserDb
-      case Map.lookup (userIdent newUser) userDb of
+      case Map.lookup (V1.userIdent newUser) userDb of
         Nothing -> do
-          atomically $ swapTVar tVarUserDb (Map.insert (userIdent newUser) (userToUserV3 newUser) userDb)
+          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V1.userIdent newUser) (V3.v1UserToV3User newUser) userDb)
           return True
         Just _  -> return False -- userIdent is not available
 
-    v1UserGet :: Text -> IO (Maybe User)
+    v1UserGet :: Text -> IO (Maybe V1.User)
     v1UserGet name = do
       userDb <- readTVarIO tVarUserDb
-      return $ userV3ToUser <$> Map.lookup name userDb
+      return $ V3.v3UserToV1User <$> Map.lookup name userDb
 
     -- V2
-    v2UserAdd :: User -> IO (Maybe User)
+    v2UserAdd :: V1.User -> IO (Maybe V1.User)
     v2UserAdd newUser = do
       userDb <- readTVarIO tVarUserDb
-      case Map.lookup (userIdent newUser) userDb of
+      case Map.lookup (V1.userIdent newUser) userDb of
         Nothing -> do
-          atomically $ swapTVar tVarUserDb (Map.insert (userIdent newUser) (userToUserV3 newUser) userDb)
+          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V1.userIdent newUser) (V3.v1UserToV3User newUser) userDb)
           return $ Just newUser
         Just _  -> return Nothing
 
 
     -- V3
-    v3UserAdd :: UserV3 -> IO (Maybe UserV3)
+    v3UserAdd :: V3.User -> IO (Maybe V3.User)
     v3UserAdd newUser = do
       userDb <- readTVarIO tVarUserDb
-      case Map.lookup (uv3UserIdent newUser) userDb of
+      case Map.lookup (V3.userIdent newUser) userDb of
         Nothing -> do
-          atomically $ swapTVar tVarUserDb (Map.insert (uv3UserIdent newUser) newUser userDb)
+          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V3.userIdent newUser) newUser userDb)
           return $ Just newUser
         Just _  -> return Nothing
 
 
-    v3UserUpdate :: UserV3 -> IO (Maybe UserV3)
+    v3UserUpdate :: V3.User -> IO (Maybe V3.User)
     v3UserUpdate newUser = undefined
 
-    v3UserGet :: Text -> IO (Maybe UserV3)
+    v3UserGet :: Text -> IO (Maybe V3.User)
     v3UserGet name = do
       userDb <- readTVarIO tVarUserDb
       return $ Map.lookup name userDb
@@ -94,5 +95,5 @@ server tVarUserDb =
 serverApi :: Proxy ServerApi
 serverApi = Proxy
 
-app :: TVar (Map.Map Text UserV3) -> Application
+app :: TVar (Map.Map Text V3.User) -> Application
 app db = serve serverApi $ server db
