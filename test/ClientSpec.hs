@@ -2,35 +2,25 @@
 
 module ClientSpec where
 
-import           Api
-
 import           Client
-
 import           Control.Concurrent.STM.TVar
-import           Control.Exception (throwIO, ErrorCall(..))
+import           Control.Exception                 (throwIO, ErrorCall(..))
 import           Control.Monad.Trans.Except
-
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict                as Map
 import           Data.Text
-
-import qualified Models.V1 as V1
-import qualified Models.V3 as V3
-
-import           Network.HTTP.Client
+import qualified Models.V1                      as V1
+import qualified Models.V3                      as V3
+import           Network.HTTP.Client        hiding (port)
 import           Network.Wai.Handler.Warp
-
 import           Server
-
-import           Servant.API
 import           Servant.Client
-
 import           Test.Hspec
 
 spec :: Spec
 spec = do
   around withApp $ do
     describe "V1" $ do
-      it "/v1/user/get: returns Nothing for non-existing users" $ \port -> do
+      it "/v1/user/get: returns Nothing for a non-existing users" $ \port -> do
         try port (userGetV1 "foo") `shouldReturn` Nothing
 
       it "/v1/user/add: adds a user" $ \port -> do
@@ -50,13 +40,22 @@ spec = do
         try port (userDeleteV3 "foo") `shouldReturn` True
         try port (userGetV3 "foo") `shouldReturn` Nothing
 
+      it "/v3/user/update: update an existing user" $ \port -> do
+        let user = V3.User "foo" "Jon Smiht" 25 "Washington, D.C." "888-888-8888"
+        try port (userAddV3 user) `shouldReturn` (Just user)
+        -- change userIdent and correct spelling.
+        let userUpdated = V3.User "bar" "John Smith" 25 "Washington, D.C." "888-888-8888"
+        try port (userUpdateV3 "foo" userUpdated) `shouldReturn` (Just userUpdated)
+        try port (userGetV3 "foo") `shouldReturn` Nothing
+
+
 main :: IO ()
 main = hspec spec
 
 withApp :: (Int -> IO a) -> IO a
 withApp action = do
-  m <- newTVarIO (Map.fromList []) :: IO (TVar (Map.Map Text V3.User))
-  testWithApplication (return $ app m) action
+  tVarUserDb <- newTVarIO (Map.fromList []) :: IO (TVar (Map.Map Text V3.User))
+  testWithApplication (return $ app tVarUserDb) action
 
 try :: Int -> (Manager -> BaseUrl -> ClientM a) -> IO a
 try port action = do

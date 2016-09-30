@@ -25,17 +25,17 @@ server tVarUserDb =
   :<|> (v3UserAddH :<|> v3UserUpdateH :<|> v3UserDeleteH :<|> v3UserExistsH :<|>  v3UserGetH)
 
   where
-    v1UserAddH newUser = liftIO $ v1UserAdd newUser
-    v1UserGetH name    = liftIO $ v1UserGet name
+    v1UserAddH newUser   = liftIO $ v1UserAdd newUser
+    v1UserGetH userIdent = liftIO $ v1UserGet userIdent
 
-    v2UserAddH newUser = liftIO $ v2UserAdd newUser
-    v2UserGetH name    = liftIO $ v1UserGet name
+    v2UserAddH newUser   = liftIO $ v2UserAdd newUser
+    v2UserGetH userIdent = liftIO $ v1UserGet userIdent
 
     v3UserAddH newUser         = liftIO $ v3UserAdd newUser
-    v3UserUpdateH name existingUser = liftIO $ v3UserUpdate name existingUser
-    v3UserDeleteH name         = liftIO $ v3UserDelete name
-    v3UserExistsH name         = liftIO $ v3UserExists name
-    v3UserGetH name            = liftIO $ v3UserGet name
+    v3UserUpdateH userIdent existingUser = liftIO $ v3UserUpdate userIdent existingUser
+    v3UserDeleteH userIdent         = liftIO $ v3UserDelete userIdent
+    v3UserExistsH userIdent         = liftIO $ v3UserExists userIdent
+    v3UserGetH userIdent            = liftIO $ v3UserGet userIdent
 
     -- V1
     v1UserAdd :: V1.User -> IO Bool
@@ -48,9 +48,9 @@ server tVarUserDb =
         Just _  -> return False -- userIdent is not available
 
     v1UserGet :: Text -> IO (Maybe V1.User)
-    v1UserGet name = do
+    v1UserGet userIdent = do
       userDb <- readTVarIO tVarUserDb
-      return $ V3.v3UserToV1User <$> Map.lookup name userDb
+      return $ V3.v3UserToV1User <$> Map.lookup userIdent userDb
 
     -- V2
     v2UserAdd :: V1.User -> IO (Maybe V1.User)
@@ -75,29 +75,29 @@ server tVarUserDb =
 
 
     v3UserUpdate :: Text -> V3.User -> IO (Maybe V3.User)
-    v3UserUpdate username newUser = do
+    v3UserUpdate userIdent newUser = do
       userDb <- readTVarIO tVarUserDb
-      case Map.lookup username userDb of
+      case Map.lookup userIdent userDb of
         Nothing -> return Nothing
         Just _ -> do
-          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V3.userIdent newUser) newUser (Map.delete username userDb))
+          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V3.userIdent newUser) newUser (Map.delete userIdent userDb))
           return $ Just newUser
 
     v3UserGet :: Text -> IO (Maybe V3.User)
-    v3UserGet name = do
+    v3UserGet userIdent = do
       userDb <- readTVarIO tVarUserDb
-      return $ Map.lookup name userDb
+      return $ Map.lookup userIdent userDb
 
     v3UserDelete :: Text -> IO Bool
-    v3UserDelete name = do
+    v3UserDelete userIdent = do
       userDb <- readTVarIO tVarUserDb
-      atomically $ swapTVar tVarUserDb (Map.delete name userDb)
+      _ <- atomically $ swapTVar tVarUserDb (Map.delete userIdent userDb)
       return True
 
     v3UserExists :: Text -> IO Bool
-    v3UserExists name = do
+    v3UserExists userIdent = do
       userDb <- readTVarIO tVarUserDb
-      case Map.lookup name userDb of
+      case Map.lookup userIdent userDb of
         Nothing -> return False
         Just _  -> return True
 

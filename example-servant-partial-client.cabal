@@ -1,8 +1,8 @@
 name:                example-servant-partial-client
 version:             0.1.0.0
 synopsis:            Servant with versioned APIs and partial client implementations
-description:         Please see README.md
-homepage:            https://github.com/githubuser/example-servant-partial-client#readme
+description:         Servant with versioned APIs and partial client implementations
+homepage:            https://github.com/mchaver/example-servant-partial-client#readme
 license:             BSD3
 license-file:        LICENSE
 author:              James M.C. Haver II

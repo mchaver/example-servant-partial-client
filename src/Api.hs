@@ -12,7 +12,10 @@ import qualified Models.V3 as V3
 import           Servant.API
 
 -- | The 'ServerApi' implements all of the versions. Some routes may be the
--- the same and some may change.
+-- the same and some may change. Build each version of the API as an individual
+-- API, then combine them together in one API. Each individual API then can
+-- be use as the client for a particular version and the server will implement
+-- the combination of all APIs.
 type ServerApi = ClientApiV1
             :<|> ClientApiV2
             :<|> ClientApiV3
