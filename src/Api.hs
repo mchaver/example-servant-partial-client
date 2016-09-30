@@ -35,7 +35,7 @@ type UserGetRoute = "user" :> "get" :> Capture "ident" Text  :> Get '[JSON] (May
 -- | Add and get a 'UserV3'.
 type ClientApiV3 = "v3" :>
           (    "user" :> "add"    :> ReqBody '[JSON] V3.User :> Post '[JSON] (Maybe V3.User) -- add a UserV3, returns a Maybe User to show if the data entry was succseful or not
-          :<|> "user" :> "update" :> ReqBody '[JSON] V3.User  :> Post '[JSON] (Maybe V3.User) -- get a User by name
+          :<|> "user" :> "update" :> Capture "ident" Text  :> ReqBody '[JSON] V3.User  :> Post '[JSON] (Maybe V3.User) -- get a User by name
           :<|> "user" :> "delete" :> Capture "ident" Text  :> Post '[JSON] Bool -- delete a User by its ident
           :<|> "user" :> "exists" :> Capture "ident" Text  :> Get '[JSON] Bool -- see if a userIdent is available
           :<|> "user" :> "get"    :> Capture "ident" Text  :> Get '[JSON] (Maybe V3.User) -- get a User by name

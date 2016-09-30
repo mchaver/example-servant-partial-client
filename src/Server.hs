@@ -32,7 +32,7 @@ server tVarUserDb =
     v2UserGetH name    = liftIO $ v1UserGet name
 
     v3UserAddH newUser         = liftIO $ v3UserAdd newUser
-    v3UserUpdateH existingUser = liftIO $ v3UserUpdate existingUser
+    v3UserUpdateH name existingUser = liftIO $ v3UserUpdate name existingUser
     v3UserDeleteH name         = liftIO $ v3UserDelete name
     v3UserExistsH name         = liftIO $ v3UserExists name
     v3UserGetH name            = liftIO $ v3UserGet name
@@ -74,8 +74,14 @@ server tVarUserDb =
         Just _  -> return Nothing
 
 
-    v3UserUpdate :: V3.User -> IO (Maybe V3.User)
-    v3UserUpdate newUser = undefined
+    v3UserUpdate :: Text -> V3.User -> IO (Maybe V3.User)
+    v3UserUpdate username newUser = do
+      userDb <- readTVarIO tVarUserDb
+      case Map.lookup username userDb of
+        Nothing -> return Nothing
+        Just _ -> do
+          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V3.userIdent newUser) newUser (Map.delete username userDb))
+          return $ Just newUser
 
     v3UserGet :: Text -> IO (Maybe V3.User)
     v3UserGet name = do
@@ -88,9 +94,12 @@ server tVarUserDb =
       atomically $ swapTVar tVarUserDb (Map.delete name userDb)
       return True
 
-
     v3UserExists :: Text -> IO Bool
-    v3UserExists name = undefined
+    v3UserExists name = do
+      userDb <- readTVarIO tVarUserDb
+      case Map.lookup name userDb of
+        Nothing -> return False
+        Just _  -> return True
 
 serverApi :: Proxy ServerApi
 serverApi = Proxy
