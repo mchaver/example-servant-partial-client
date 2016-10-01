@@ -13,6 +13,7 @@ import           Control.Monad.STM
 import qualified Data.Map.Strict as Map
 import           Data.Text
 import qualified Models.V1 as V1
+import qualified Models.V2 as V2
 import qualified Models.V3 as V3
 import           Network.Wai
 import           Servant
@@ -29,13 +30,13 @@ server tVarUserDb =
     v1UserGetH userIdent = liftIO $ v1UserGet userIdent
 
     v2UserAddH newUser   = liftIO $ v2UserAdd newUser
-    v2UserGetH userIdent = liftIO $ v1UserGet userIdent
+    v2UserGetH userIdent = liftIO $ v2UserGet userIdent
 
-    v3UserAddH newUser         = liftIO $ v3UserAdd newUser
+    v3UserAddH newUser                   = liftIO $ v3UserAdd newUser
     v3UserUpdateH userIdent existingUser = liftIO $ v3UserUpdate userIdent existingUser
-    v3UserDeleteH userIdent         = liftIO $ v3UserDelete userIdent
-    v3UserExistsH userIdent         = liftIO $ v3UserExists userIdent
-    v3UserGetH userIdent            = liftIO $ v3UserGet userIdent
+    v3UserDeleteH userIdent              = liftIO $ v3UserDelete userIdent
+    v3UserExistsH userIdent              = liftIO $ v3UserExists userIdent
+    v3UserGetH userIdent                 = liftIO $ v3UserGet userIdent
 
     -- V1
     v1UserAdd :: V1.User -> IO Bool
@@ -53,14 +54,19 @@ server tVarUserDb =
       return $ V3.v3UserToV1User <$> Map.lookup userIdent userDb
 
     -- V2
-    v2UserAdd :: V1.User -> IO (Maybe V1.User)
+    v2UserAdd :: V2.User -> IO (Maybe V2.User)
     v2UserAdd newUser = do
       userDb <- readTVarIO tVarUserDb
-      case Map.lookup (V1.userIdent newUser) userDb of
+      case Map.lookup (V2.userIdent newUser) userDb of
         Nothing -> do
-          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V1.userIdent newUser) (V3.v1UserToV3User newUser) userDb)
+          _ <- atomically $ swapTVar tVarUserDb (Map.insert (V2.userIdent newUser) (V3.v2UserToV3User newUser) userDb)
           return $ Just newUser
         Just _  -> return Nothing
+
+    v2UserGet :: Text -> IO (Maybe V2.User)
+    v2UserGet userIdent = do
+      userDb <- readTVarIO tVarUserDb
+      return $ V3.v3UserToV2User <$> Map.lookup userIdent userDb
 
 
     -- V3
